@@ -23,10 +23,10 @@ def step4_upload_neo4j():
         node_list = json.load(f)
     neo_util.add_node_to_neo4j(node_list, neo4j_database)
 
-    print("Add edges")
-    with open(edge_filepath) as f:
-        edge_list = json.load(f)
-    neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+    # print("Add edges")
+    # with open(edge_filepath) as f:
+    #     edge_list = json.load(f)
+    # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
 
 
 if __name__ == "__main__":

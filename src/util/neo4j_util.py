@@ -15,6 +15,8 @@ class neo4jUtil:
 
     @staticmethod
     def gen_add_node_cypher(node_info):
+        # add new node
+        # check node_ID, if node exists, merge all properties.
         node_ID = node_info['node_ID']
         label_list = node_info['label']
         property_dict = node_info['property']

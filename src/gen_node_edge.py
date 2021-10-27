@@ -48,7 +48,7 @@ for disease, drug in disease_drug_list:
         "property": {
             "disease_name": disease,
             "display": disease,
-            "desc": disease_dict.get(disease, {}).get("desc", ""),
+            "description": disease_dict.get(disease, {}).get("desc", ""),
             "prevent": disease_dict.get(disease, {}).get("prevent", ""),
             "cause": disease_dict.get(disease, {}).get("cause", ""),
             "in_medical_insurance": disease_dict.get(disease, {}).get("yibao_status", ""),
