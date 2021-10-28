@@ -108,5 +108,10 @@ class neo4jUtil:
             cypher_statement = "match (n) detach delete n"
             session.write_transaction(self.neo4j_run_cypher, cypher_statement)
 
+    def delete_node_by_label(self, database, label):
+        with self.driver.session(database=database) as session:
+            cypher_statement = "match (n: {}) detach delete n".format(label)
+            session.write_transaction(self.neo4j_run_cypher, cypher_statement)
+
     def close_driver(self):
         self.driver.close()

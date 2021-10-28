@@ -15,8 +15,10 @@ def step4_upload_neo4j():
     node_filepath = "json/nodes.json"
     edge_filepath = "json/edges.json"
 
-    # print("Delete all nodes and relationships")
-    # neo_util.delete_all_neo4j(neo4j_database)
+    # node_list = ["drug", "disease", "symptom"]
+    # for nl in node_list:
+    #     print("Delete node: {}".format(nl))
+    #     neo_util.delete_node_by_label(neo4j_database, nl)
 
     print("Add nodes")
     with open(node_filepath) as f:

@@ -86,6 +86,10 @@ for disease, drug in disease_drug_list:
             "expiry_date": drug_dict.get(drug, {}).get("有效期", ""),
             "package": drug_dict.get(drug, {}).get("包装", ""),
             "standard": drug_dict.get(drug, {}).get("执行标准", ""),
+            "in_medical_insurance": drug_dict.get(drug, {}).get("是否医保", ""),
+            "insurance_drug_name": drug_dict.get(drug, {}).get("医保药品名", ""),
+            "insurance_level": drug_dict.get(drug, {}).get("甲乙", ""),
+            "insurance_drug_category": drug_dict.get(drug, {}).get("医保药品种类", ""),
         }
     }
     if drug not in drug_set:
@@ -119,7 +123,7 @@ for disease, symptom in disease_symptom_list:
         "property": {
             "disease_name": disease,
             "display": disease,
-            "desc": disease_dict.get(disease, {}).get("desc", ""),
+            "description": disease_dict.get(disease, {}).get("desc", ""),
             "prevent": disease_dict.get(disease, {}).get("prevent", ""),
             "cause": disease_dict.get(disease, {}).get("cause", ""),
             "in_medical_insurance": disease_dict.get(disease, {}).get("yibao_status", ""),
