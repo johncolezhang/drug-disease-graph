@@ -90,6 +90,8 @@ for disease, drug in disease_drug_list:
             "insurance_drug_name": drug_dict.get(drug, {}).get("医保药品名", ""),
             "insurance_level": drug_dict.get(drug, {}).get("甲乙", ""),
             "insurance_drug_category": drug_dict.get(drug, {}).get("医保药品种类", ""),
+            "insurance_drug_category_num": drug_dict.get(drug, {}).get("医保药品种类编号", ""),
+            "insurance_dosage_form": drug_dict.get(drug, {}).get("剂型", "")
         }
     }
     if drug not in drug_set:
