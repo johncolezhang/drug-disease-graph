@@ -20,15 +20,19 @@ def step4_upload_neo4j():
     #     print("Delete node: {}".format(nl))
     #     neo_util.delete_node_by_label(neo4j_database, nl)
 
-    print("Add nodes")
-    with open(node_filepath) as f:
-        node_list = json.load(f)
-    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+    # print("Add nodes")
+    # with open(node_filepath) as f:
+    #     node_list = json.load(f)
+    # neo_util.add_node_to_neo4j(node_list, neo4j_database)
 
     # print("Add edges")
     # with open(edge_filepath) as f:
     #     edge_list = json.load(f)
     # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+
+    with open("json/dc_edges.json") as f:
+        edge_list = json.load(f)
+    neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
 
 
 if __name__ == "__main__":
