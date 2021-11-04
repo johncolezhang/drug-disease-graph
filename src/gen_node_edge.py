@@ -230,6 +230,40 @@ def gen_drug_che_rel():
     with open("json/dc_edges.json", "w") as f:
         json.dump(edge_list, f)
 
+
+def gen_drug_interact_rel():
+    df_di = pd.read_csv("processed/drug_interaction.csv", dtype=str).fillna("")
+    edge_list = []
+    for index, row in df_di.iterrows():
+        drug_interact_edge = {
+            "start_node": {
+                "label": ["drug"],
+                "node_ID": "drug_name",
+                "property": {
+                    "drug_name": row["drugs"],
+                }
+            },
+            "end_node": {
+                "label": ["drug"],
+                "node_ID": "drug_name",
+                "property": {
+                    "drug_name": row["interact_drug"],
+                }
+            },
+            "edge": {
+                "label": "drug_interaction",
+                "property": {
+                    "detail": row["detail"].replace("\"", "'")
+                }
+            }
+        }
+        edge_list.append(drug_interact_edge)
+
+    with open("json/drug_interact_edges.json", "w") as f:
+        json.dump(edge_list, f)
+
+
 if __name__ == "__main__":
     # gen_relation()
-    gen_drug_che_rel()
+    # gen_drug_che_rel()
+    gen_drug_interact_rel()

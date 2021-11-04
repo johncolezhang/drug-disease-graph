@@ -25,6 +25,7 @@ def generate_file():
     df_insurance_l2 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L2.csv", dtype=str).fillna("")
     df_insurance_l3 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L3.csv", dtype=str).fillna("")
 
+    # 所有药物节点来自于药品说明书数据
     drug_dict = {}
     for index, row in df_drug_description.iterrows():
         drug_name = row["药品名称"]
@@ -240,6 +241,37 @@ def generate_drug_chemical_relation():
 
     df_drug_chemical.to_csv("processed/drug_chemical.csv", index=False)
 
+
+def generate_drug_interaction():
+    with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
+        drug_dict = json.load(f)
+
+    drug_interaction_dict = {}
+    drug_regex_dict = {}
+    drug_regex = re.compile(
+        r"[喉片|素|口腔|崩解|肠溶|舌下|放射免疫分析药盒|眼用|凝胶|片|注射液|颗粒|滴剂|胶囊|散剂|贴片|凝胶|咀嚼|混悬液|乳剂|剂|膏|丸|口服|口服液|糖浆|咀嚼|泡腾|缓释|分散|滴眼液|溶液|粉雾剂|速释]"
+    )
+    for key, value in drug_dict.items():
+        drug_interaction_dict[key] = value["药物相互作用"]
+        drug_regex_dict[key] = key
+        drug_regex_dict[re.sub(drug_regex, "", key)] = key
+
+    drug_inter_list = []
+    for drug, interaction in drug_interaction_dict.items():
+        if interaction == "":
+            continue
+        for d in list(filter(lambda x: len(x) > 1 and x not in [drug, "和血", "降宁"] and x in interaction,
+                             drug_regex_dict.keys())):
+            drug_inter_list.append((drug, d, drug_regex_dict[d], interaction))
+
+    drug_inter_list = list(set(map(lambda x: (x[0], x[2], x[3]), drug_inter_list)))
+    pd.DataFrame(
+        drug_inter_list,
+        columns=["drugs", "interact_drug", "detail"]
+    ).to_csv("processed/drug_interaction.csv", index=False)
+
+
 if __name__ == "__main__":
-    generate_file()
-    generate_drug_chemical_relation()
+    # generate_file()
+    # generate_drug_chemical_relation()
+    generate_drug_interaction()
