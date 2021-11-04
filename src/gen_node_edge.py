@@ -188,6 +188,9 @@ def gen_relation():
 
 
 def gen_drug_che_rel():
+    with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
+        drug_dict = json.load(f)
+
     df_dc = pd.read_csv("processed/drug_chemical.csv", dtype=str).fillna("")
     dc_relation_list = []
     for index, row in df_dc.iterrows():
@@ -204,7 +207,15 @@ def gen_drug_che_rel():
     dc_relation_list = list(set(dc_relation_list))
 
     edge_list = []
+    drug_node_list = []
+    drug_set = []
     for rel in dc_relation_list:
+        drug_node = get_drug_node(rel[1], drug_dict)
+        if rel[1] not in drug_set:
+            # add drug node
+            drug_set.append(rel[1])
+            drug_node_list.append(drug_node)
+
         chemical_drug_edge = {
             "start_node": {
                 "label": ["chemical"],
@@ -230,17 +241,74 @@ def gen_drug_che_rel():
     with open("json/dc_edges.json", "w") as f:
         json.dump(edge_list, f)
 
+    with open("json/dc_nodes.json", "w") as f:
+        json.dump(drug_node_list, f)
+
+
+def get_drug_node(drug, drug_dict):
+    return {
+        "label": ["drug"],
+        "node_ID": "drug_name",
+        "property": {
+            "drug_name": drug,
+            "display": drug,
+            "component": drug_dict.get(drug, {}).get("成份", ""),
+            "character": drug_dict.get(drug, {}).get("性状", ""),
+            "indication": drug_dict.get(drug, {}).get("适应症", ""),
+            "dosage": drug_dict.get(drug, {}).get("用法用量", ""),
+            "adverse_reaction": drug_dict.get(drug, {}).get("不良反应", ""),
+            "avoid": drug_dict.get(drug, {}).get("禁忌", ""),
+            "attention_notice": drug_dict.get(drug, {}).get("注意事项", ""),
+            "pregnant_attention": drug_dict.get(drug, {}).get("孕妇及哺乳期妇女用药", ""),
+            "children_attention": drug_dict.get(drug, {}).get("儿童用药", ""),
+            "older_attention": drug_dict.get(drug, {}).get("老年用药", ""),
+            "storage": drug_dict.get(drug, {}).get("贮藏", ""),
+            "specification": drug_dict.get(drug, {}).get("规格", ""),
+            "drug_interaction": drug_dict.get(drug, {}).get("药物相互作用", ""),
+            "pharmacology_toxicology": drug_dict.get(drug, {}).get("药理毒理", ""),
+            "pharmacokinetics": drug_dict.get(drug, {}).get("药代动力学", ""),
+            "drug_overdose": drug_dict.get(drug, {}).get("药物过量", ""),
+            "expiry_date": drug_dict.get(drug, {}).get("有效期", ""),
+            "package": drug_dict.get(drug, {}).get("包装", ""),
+            "standard": drug_dict.get(drug, {}).get("执行标准", ""),
+            "in_medical_insurance": drug_dict.get(drug, {}).get("是否医保", ""),
+            "insurance_drug_name": drug_dict.get(drug, {}).get("医保药品名", ""),
+            "insurance_level": drug_dict.get(drug, {}).get("甲乙", ""),
+            "insurance_drug_category": drug_dict.get(drug, {}).get("医保药品种类", ""),
+            "insurance_drug_category_num": drug_dict.get(drug, {}).get("医保药品种类编号", ""),
+            "insurance_dosage_form": drug_dict.get(drug, {}).get("剂型", "")
+        }
+    }
+
 
 def gen_drug_interact_rel():
     df_di = pd.read_csv("processed/drug_interaction.csv", dtype=str).fillna("")
+
+    with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
+        drug_dict = json.load(f)
+
+    drug_node_list = []
+    drug_set = []
     edge_list = []
     for index, row in df_di.iterrows():
+        drug_node = get_drug_node(row["drug"], drug_dict)
+        if row["drug"] not in drug_set:
+            # add drug node
+            drug_set.append(row["drug"])
+            drug_node_list.append(drug_node)
+
+        drug_node = get_drug_node(row["interact_drug"], drug_dict)
+        if row["interact_drug"] not in drug_set:
+            # add drug node
+            drug_set.append(row["interact_drug"])
+            drug_node_list.append(drug_node)
+
         drug_interact_edge = {
             "start_node": {
                 "label": ["drug"],
                 "node_ID": "drug_name",
                 "property": {
-                    "drug_name": row["drugs"],
+                    "drug_name": row["drug"],
                 }
             },
             "end_node": {
@@ -262,8 +330,11 @@ def gen_drug_interact_rel():
     with open("json/drug_interact_edges.json", "w") as f:
         json.dump(edge_list, f)
 
+    with open("json/drug_interact_nodes.json", "w") as f:
+        json.dump(drug_node_list, f)
+
 
 if __name__ == "__main__":
     # gen_relation()
-    # gen_drug_che_rel()
+    gen_drug_che_rel()
     gen_drug_interact_rel()

@@ -25,7 +25,7 @@ def generate_file():
     df_insurance_l2 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L2.csv", dtype=str).fillna("")
     df_insurance_l3 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L3.csv", dtype=str).fillna("")
 
-    # 所有药物节点来自于药品说明书数据
+    # 药品说明书数据用于药品属性的映射
     drug_dict = {}
     for index, row in df_drug_description.iterrows():
         drug_name = row["药品名称"]
@@ -89,6 +89,7 @@ def generate_file():
         if disease["name"] in match_dict.keys():
             disease["ICD10_code"] = icd_name_dict[match_dict[disease["name"]]]
 
+    # disease_drug_list里的药品数据最终会存到图谱当中
     disease_drug_list = []
     disease_symptom_list = []
     for disease in disease_list:
@@ -265,9 +266,10 @@ def generate_drug_interaction():
             drug_inter_list.append((drug, d, drug_regex_dict[d], interaction))
 
     drug_inter_list = list(set(map(lambda x: (x[0], x[2], x[3]), drug_inter_list)))
+    drug_inter_list = list(filter(lambda x: x[0] != x[2], drug_inter_list))
     pd.DataFrame(
         drug_inter_list,
-        columns=["drugs", "interact_drug", "detail"]
+        columns=["drug", "interact_drug", "detail"]
     ).to_csv("processed/drug_interaction.csv", index=False)
 
 
