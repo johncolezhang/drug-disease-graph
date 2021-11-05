@@ -273,7 +273,105 @@ def generate_drug_interaction():
     ).to_csv("processed/drug_interaction.csv", index=False)
 
 
+def handle_fda_warning():
+    df_warning = pd.read_csv("processed/fda_warning.csv", dtype=str).fillna("")
+    link_list = [x if "https://www.fda.gov" in x else "https://www.fda.gov{}".format(x) for x in df_warning["link"].values]
+    df_warning = df_warning.assign(link=link_list)
+    warning_list = list(df_warning["warning"].values)
+
+    df_dc = pd.read_csv("processed/drug_chemical.csv", dtype=str).fillna("")
+    from collections import defaultdict
+
+    dc_dict = defaultdict(list)
+    dc_relation_list = []
+    for index, row in df_dc.iterrows():
+        chemical = row["chemical"].lower()
+        drug = row["chn_name"]
+        drug_alias = row["name_alias"]
+
+        if chemical != "" and drug != "":
+            dc_relation_list.append((chemical, drug))
+            dc_dict[chemical].append(drug)
+
+        if chemical != "" and drug_alias != "" and drug_alias != drug:
+            dc_relation_list.append((chemical, drug_alias))
+            dc_dict[chemical].append(drug_alias)
+
+    dc_relation_list = list(set(dc_relation_list))
+
+    warning_split_list = [x.split(" ") for x in warning_list]
+    common_chemical_list = []
+    for ws in warning_split_list:
+        common_chemical_list.append(list(set(ws).intersection(set(dc_dict.keys()))))
+
+    df_drug_chemical = pd.read_csv(
+        "d:/pgkb_graph/processed/nmpa_drug_chemical.csv",
+        encoding="utf-8",
+        dtype=str
+    ).fillna("")[["chemical", "eng_name", "eng_business_name"]]
+
+    db_dict = defaultdict(list)
+    for index, row in df_drug_chemical.iterrows():
+        chemical = row["chemical"]
+        drug_business_name_eng = row["eng_business_name"].lower()
+
+        if chemical != "" and drug_business_name_eng != "":
+            db_dict[chemical].append(drug_business_name_eng)
+
+    db_dict = {x.lower(): list(filter(lambda x: x not in ['-'], set(y))) for x, y in db_dict.items()}
+
+    common_business_name_list = []
+    for ws in warning_split_list:
+        sub_list = []
+        for key, value in db_dict.items():
+            intersect = set(ws).intersection(set(value))
+            if len(intersect) > 0:
+                sub_list.append(key)
+        common_business_name_list.append(sub_list)
+
+    match_che_list = []
+    match_drug_list = []
+    for i in range(len(warning_list)):
+        che_list = []
+        if len(common_chemical_list[i]) > 0:
+            che_list.extend(common_chemical_list[i])
+        if len(common_business_name_list[i]) > 0:
+            che_list.extend(common_business_name_list[i])
+        che_list = list(set(che_list))
+        match_che_list.append(che_list)
+        drug_list = []
+        for che in che_list:
+            drug_list.extend(dc_dict[che])
+        match_drug_list.append(drug_list)
+
+    df_warning = df_warning.assign(match_chemical_list=match_che_list)
+    df_warning = df_warning.assign(match_drug_list=match_drug_list)
+
+    df_warning.to_csv("processed/fda_warning.csv", index=False)
+
+    drug_warning_dict = {}
+    for index, row in df_warning.iterrows():
+        warning = row["warning"]
+        warning_chn = row['warning_chn']
+        drug_list = row["match_drug_list"]
+        link = row["link"]
+        for drug in drug_list:
+            if drug not in drug_warning_dict:
+                drug_warning_dict[drug] = defaultdict(list)
+            drug_warning_dict[drug]["warning"].append(warning)
+            drug_warning_dict[drug]["warning_chn"].append(warning_chn)
+            drug_warning_dict[drug]["link"].append(link)
+
+    for key, value in drug_warning_dict.items():
+        for k in value.keys():
+            value[k] = " \n".join(["{}. {}".format(i, value[k][i - 1]) for i in range(1, len(value[k]) + 1)])
+
+    with open("processed/warning_dict.json", "w") as f:
+        json.dump(drug_warning_dict, f)
+
+
 if __name__ == "__main__":
     # generate_file()
     # generate_drug_chemical_relation()
-    generate_drug_interaction()
+    # generate_drug_interaction()
+    handle_fda_warning()

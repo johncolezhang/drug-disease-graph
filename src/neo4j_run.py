@@ -30,13 +30,25 @@ def step4_upload_neo4j():
     #     edge_list = json.load(f)
     # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
 
+    edge_list = ["chemical_drug_relation", "drug_interaction"]
+    for el in edge_list:
+        neo_util.delete_node_by_label(neo4j_database, el)
+
+    with open("json/dc_nodes.json") as f:
+        node_list = json.load(f)
+    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+
     # with open("json/dc_edges.json") as f:
     #     edge_list = json.load(f)
     # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
 
-    with open("json/drug_interact_edges.json") as f:
-        edge_list = json.load(f)
-    neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+    with open("json/drug_interact_nodes.json") as f:
+        node_list = json.load(f)
+    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+
+    # with open("json/drug_interact_edges.json") as f:
+    #     edge_list = json.load(f)
+    # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
 
 if __name__ == "__main__":
     step4_upload_neo4j()
