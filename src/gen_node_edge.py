@@ -20,6 +20,7 @@ def edge_node(node, remain_label_list, remain_property_list):
     return new_node
 
 def gen_relation():
+    # Add node, relation from disease_node_list and symptom_node_list
     drug_node_list = []
     disease_node_list = []
     symptom_node_list = []
@@ -158,6 +159,7 @@ def gen_relation():
 
 
 def gen_drug_che_rel():
+    # Add node, chemical-drug relation from drug_chemical
     with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
         drug_dict = json.load(f)
 
@@ -259,6 +261,7 @@ def get_drug_node(drug, drug_dict, warning_dict):
 
 
 def gen_drug_interact_rel():
+    # Add node, drug-interact relation from drug_interaction file
     df_di = pd.read_csv("processed/drug_interaction.csv", dtype=str).fillna("")
 
     with open("processed/warning_dict.json", "r", encoding="utf-8") as f:
@@ -314,7 +317,24 @@ def gen_drug_interact_rel():
         json.dump(drug_node_list, f)
 
 
+def gen_drug_dict_node():
+    # Add all drug node from drug_dict file
+    with open("processed/warning_dict.json", "r", encoding="utf-8") as f:
+        warning_dict = json.load(f)
+
+    with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
+        drug_dict = json.load(f)
+
+    node_list = []
+    for key in drug_dict.keys():
+        node_list.append(get_drug_node(key, drug_dict, warning_dict))
+
+    with open("json/all_drug_nodes.json", "w") as f:
+        json.dump(node_list, f)
+
+
 if __name__ == "__main__":
     # gen_relation()
-    gen_drug_che_rel()
-    gen_drug_interact_rel()
+    # gen_drug_che_rel()
+    # gen_drug_interact_rel()
+    gen_drug_dict_node()

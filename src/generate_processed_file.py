@@ -22,6 +22,8 @@ def generate_file():
                 axis=0)
     df_drug_description = df_drug_description.fillna("")
 
+    df_drug_description.to_csv("processed/drug_description.csv", index=False)
+
     df_insurance_l2 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L2.csv", dtype=str).fillna("")
     df_insurance_l3 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L3.csv", dtype=str).fillna("")
 
