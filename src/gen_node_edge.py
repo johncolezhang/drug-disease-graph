@@ -333,8 +333,42 @@ def gen_drug_dict_node():
         json.dump(node_list, f)
 
 
+def gen_new_che_drug_relation():
+    df_new_che_drug = pd.read_csv("processed/new_match_drug_chemical.csv", dtype=str).fillna("")
+    edge_list = []
+
+    for index, row in df_new_che_drug.iterrows():
+        chemical_name = row["chemical"]
+        drug_name = row["drug"]
+
+        chemical_drug_edge = {
+            "start_node": {
+                "label": ["chemical"],
+                "node_ID": "chemical_name",
+                "property": {
+                    "chemical_name": chemical_name,
+                }
+            },
+            "end_node": {
+                "label": ["drug"],
+                "node_ID": "drug_name",
+                "property": {
+                    "drug_name": drug_name,
+                }
+            },
+            "edge": {
+                "label": "chemical_drug_relation",
+                "property": {}
+            }
+        }
+        edge_list.append(chemical_drug_edge)
+
+    with open("json/new_che_drug_edges.json", "w") as f:
+        json.dump(edge_list, f)
+
 if __name__ == "__main__":
     # gen_relation()
     # gen_drug_che_rel()
     # gen_drug_interact_rel()
-    gen_drug_dict_node()
+    # gen_drug_dict_node()
+    gen_new_che_drug_relation()
