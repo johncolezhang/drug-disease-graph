@@ -52,9 +52,18 @@ def step4_upload_neo4j():
     #     node_list = json.load(f)
     # neo_util.add_node_to_neo4j(node_list, neo4j_database)
 
-    with open("json/new_che_drug_edges.json", "r") as f:
+    # with open("json/new_che_drug_edges.json", "r") as f:
+    #     edge_list = json.load(f)
+    # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+
+    with open("json/cn_dl_nodes.json", "r") as f:
+        node_list = json.load(f)
+    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+
+    with open("json/cn_dl_edges.json", "r") as f:
         edge_list = json.load(f)
     neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+
 
 if __name__ == "__main__":
     step4_upload_neo4j()

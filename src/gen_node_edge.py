@@ -366,9 +366,75 @@ def gen_new_che_drug_relation():
     with open("json/new_che_drug_edges.json", "w") as f:
         json.dump(edge_list, f)
 
+
+def generate_cn_drug_label():
+    df_cn_dl = pd.read_csv("processed/cn_drug_label.csv", dtype=str).fillna("")
+    node_name_set = []
+    node_list = []
+    edge_list = []
+    for index, row in df_cn_dl.iterrows():
+        gene_name = row["gene"]
+        chemical_name = row["en_drug"]
+        remark = row["remark"]
+        gene_node = {
+            "label": ["gene"],
+            "node_ID": "gene_name",
+            "property": {
+                "gene_name": gene_name,
+                "display": gene_name
+            }
+        }
+        if gene_name not in node_name_set:
+            node_list.append(gene_node)
+            node_name_set.append(gene_name)
+
+        chemical_node = {
+            "label": ["chemical"],
+            "node_ID": "chemical_name",
+            "property": {
+                "chemical_name": chemical_name,
+                "display": chemical_name
+            }
+        }
+        if chemical_name not in node_name_set:
+            node_list.append(chemical_node)
+            node_name_set.append(chemical_name)
+
+        cn_label_edge = {
+            "end_node": {
+                "label": ["chemical"],
+                "node_ID": "chemical_name",
+                "property": {
+                    "chemical_name": chemical_name,
+                }
+            },
+            "start_node": {
+                "label": ["gene"],
+                "node_ID": "gene_name",
+                "property": {
+                    "gene_name": gene_name,
+                }
+            },
+            "edge": {
+                "label": "cn_drug_label",
+                "property": {
+                    "remark": remark
+                }
+            }
+        }
+        edge_list.append(cn_label_edge)
+
+    with open("json/cn_dl_nodes.json", "w") as f:
+        json.dump(node_list, f)
+
+    with open("json/cn_dl_edges.json", "w") as f:
+        json.dump(edge_list, f)
+
+
 if __name__ == "__main__":
     # gen_relation()
     # gen_drug_che_rel()
     # gen_drug_interact_rel()
     # gen_drug_dict_node()
-    gen_new_che_drug_relation()
+    # gen_new_che_drug_relation()
+    generate_cn_drug_label()
