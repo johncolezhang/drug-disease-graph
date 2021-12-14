@@ -199,7 +199,7 @@ def generate_file():
 
 def generate_drug_chemical_relation():
     df_drug_chemical = pd.read_csv("d:/pgkb_graph/processed/nmpa_drug_chemical.csv",
-                                   dtype=str).fillna("")[["chemical", "chn_name"]]
+                                   dtype=str).fillna("")[["chemical", "chn_name", "eng_name"]]
 
     df_drug_chemical = df_drug_chemical.drop_duplicates()
 
@@ -241,6 +241,13 @@ def generate_drug_chemical_relation():
 
     drug_name_alias = [dc_match_dict.get(x, "") for x in list(df_drug_chemical["chn_name"].values)]
     df_drug_chemical = df_drug_chemical.assign(name_alias=drug_name_alias)
+
+    df_translation = pd.read_csv("processed/chemical_translation.csv").fillna("")
+
+    df_drug_chemical = pd.merge(df_drug_chemical, df_translation, how="left",
+                                left_on=["chemical"], right_on=["chemical_name"]).fillna("")
+
+    df_drug_chemical = df_drug_chemical[["chemical", "cn_chemical_name", "chn_name", "eng_name", "name_alias"]]
 
     df_drug_chemical.to_csv("processed/drug_chemical.csv", index=False)
 
@@ -373,7 +380,7 @@ def handle_fda_warning():
 
 
 if __name__ == "__main__":
-    # generate_file()
-    # generate_drug_chemical_relation()
-    # generate_drug_interaction()
+    generate_file()
+    generate_drug_chemical_relation()
+    generate_drug_interaction()
     handle_fda_warning()

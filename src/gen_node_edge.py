@@ -160,6 +160,7 @@ def gen_relation():
 
 def gen_drug_che_rel():
     # Add node, chemical-drug relation from drug_chemical
+    # drug chemical match by english
     with open("processed/drug_dict.json", "r", encoding="utf-8") as f:
         drug_dict = json.load(f)
 
@@ -261,6 +262,7 @@ def get_drug_node(drug, drug_dict, warning_dict):
 
 
 def gen_drug_interact_rel():
+    # TODO need to improve
     # Add node, drug-interact relation from drug_interaction file
     df_di = pd.read_csv("processed/drug_interaction.csv", dtype=str).fillna("")
 
@@ -334,6 +336,7 @@ def gen_drug_dict_node():
 
 
 def gen_new_che_drug_relation():
+    # 通过化合物中文翻译匹配新的药物化合物关系
     df_new_che_drug = pd.read_csv("processed/new_match_drug_chemical.csv", dtype=str).fillna("")
     edge_list = []
 
@@ -432,9 +435,9 @@ def generate_cn_drug_label():
 
 
 if __name__ == "__main__":
-    # gen_relation()
-    # gen_drug_che_rel()
+    gen_relation()
+    gen_drug_che_rel()
     # gen_drug_interact_rel()
-    # gen_drug_dict_node()
-    # gen_new_che_drug_relation()
+    gen_drug_dict_node()
+    gen_new_che_drug_relation()
     generate_cn_drug_label()
