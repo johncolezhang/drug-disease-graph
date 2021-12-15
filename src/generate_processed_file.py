@@ -60,7 +60,7 @@ def generate_file():
             disease["ICD10_code"] = ""
 
     # 最短编辑比率
-    # 用来匹配ICD字典与疾病名
+    # 用来匹配ICD10字典与疾病名
     # after cleaning, matched disease increased from 632 to 868
     max_match_list = []
     no_match_list = list(map(lambda x: [
