@@ -5,7 +5,7 @@ from py2neo import Graph
 import pandas as pd
 import json
 
-session = Graph("neo4j://172.16.227.27:7687", auth=("neo4j", "123456"))
+session = Graph("neo4j://172.16.231.80:7687", auth=("neo4j", "123456"))
 
 cypher_template = """
 MATCH (n:disease)
@@ -15,6 +15,8 @@ return n.disease_name as disease_name, degree order by degree desc
 
 degree_list = session.run(cypher_template).data()
 df_degree = pd.DataFrame(degree_list)
+
+df_degree = df_degree[df_degree["disease_name"].str.len() >= 2]
 
 cypher_template = """
 MATCH (n:disease) return n.disease_name as disease_name
@@ -37,7 +39,7 @@ for index, row in df_merge.iterrows():
             "property": {
                 "disease_name": row["disease_name"],
                 "display": row["disease_name"],
-                "disease_degree": row["degree"]
+                "disease_degree": int(row["degree"])
             }
         }
         node_list.append(dis_node)

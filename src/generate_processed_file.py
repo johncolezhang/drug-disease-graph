@@ -35,6 +35,149 @@ def generate_file():
         for col in dd_columns:
             drug_dict[drug_name][col] = row[col]
 
+    print("drug_dict length: {}".format(len(drug_dict)))
+
+    df_drug_description_new = pd.read_csv("processed/new_drug_description.csv", dtype=str).fillna("")
+    for index, row in df_drug_description_new.iterrows():
+        drug_name = row["药品名称"]
+        if drug_name in drug_dict.keys():
+            for col in df_drug_description_new.columns:
+                if drug_dict[drug_name][col] == "" and row[col] != "":
+                    drug_dict[drug_name][col] = row[col]
+
+        drug_dict[drug_name] = {}
+        for col in dd_columns:
+            if col not in df_drug_description_new.columns:
+                drug_dict[drug_name][col] = ""
+            else:
+                drug_dict[drug_name][col] = row[col]
+
+    print("drug_dict length: {}".format(len(drug_dict)))
+
+    # add insurance info
+    seq_regex = re.compile(r"（[\w]+-[\w]+）")
+    seq_list = []
+    text_list = []
+    code_list = []
+    for index, row in df_insurance_l2.iterrows():
+        try:
+            text = row["text"]
+            code = row["code"]
+            seq = re.findall(seq_regex, text)[0]
+            text = text.replace(seq, "")
+            start, end = seq.replace("（", "").replace("）", "").split("-")
+            seq_list.append([start, end])
+            text_list.append(text)
+            code_list.append(code)
+        except:
+            continue
+
+    zip_list = list(zip(seq_list, code_list, text_list))
+    num_dict = {}
+    for x in zip_list:
+        for i in range(int(x[0][0]), int(x[0][1]) + 1):
+            num_dict[i] = [x[1], x[2]]
+
+    num_regex = re.compile(r"[\w]+")
+    insurance_dict = {}
+
+    df_insurance_chn = pd.read_csv("processed/中成药医保.csv", dtype=str).fillna("")
+    brac_regex = re.compile(r"（[^)]*）")
+    for index, row in df_insurance_chn.iterrows():
+        name = re.sub(brac_regex, "", row["药名"])
+        clazz = row["报销类别"]
+        if "甲" in clazz:
+            clazz = "甲"
+        elif "乙" in clazz:
+            clazz = "乙"
+
+        code = ""
+        dosage_form = ""
+        category_num = ""
+        category = ""
+        insurance_dict["{}--{}".format(name, dosage_form)] = [code, clazz, category_num, category]
+
+        # 补充药物数据
+        if name not in drug_dict.keys():
+            drug_dict[name] = {}
+
+    df_insurance_eng = pd.read_csv("processed/西药医保.csv", dtype=str).fillna("")
+    for index, row in df_insurance_eng.iterrows():
+        name = re.sub(brac_regex, "", row["药名"])
+        dosage_form = row["剂型"]
+        clazz = row["报销类别"]
+        if "甲" in clazz:
+            clazz = "甲"
+        elif "乙" in clazz:
+            clazz = "乙"
+
+        code = ""
+        category_num = ""
+        category = ""
+        insurance_dict["{}--{}".format(name, dosage_form)] = [code, clazz, category_num, category]
+
+        # 补充药物数据
+        if name not in drug_dict.keys():
+            drug_dict[name] = {}
+
+    for index, row in df_insurance_l3.iterrows():
+        code = row["编号"]
+        clazz = row["甲乙"]
+        name = row["药品名称"]
+        dosage_form = row["剂型"]
+        try:
+            num = re.findall(num_regex, code)[0]
+            category_num = num_dict[int(num)][0]
+            category = num_dict[int(num)][1]
+        except:
+            category_num = ""
+            category = ""
+        insurance_dict["{}--{}".format(name, dosage_form)] = [code, clazz, category_num, category]
+
+        # 补充药物数据
+        if name not in drug_dict.keys():
+            drug_dict[name] = {}
+
+    drug_sub_regex = re.compile(r"[片|注射液|颗粒|滴剂|胶囊|散剂|混悬液|乳剂|剂|膏|丸|口服溶液|口服液|咀嚼|泡腾|分散|凝胶|肠溶]")
+    # 最短编辑比率
+    for drug in drug_dict.keys():
+        max_ratio = 0
+        max_insurance = ""
+        drug_clean = re.sub(r"[\(\)-\/（）\-\[\]\s、]", "", drug)
+        drug_clean = re.sub(drug_sub_regex,
+                            "", drug_clean)
+
+        for ori_insurance in insurance_dict.keys():
+            insurance, dosage_form = ori_insurance.split("--")
+            insurance_clean = re.sub(r"[\(\)-\/（）\-\[\]\s、]", "", insurance)
+            insurance_clean = re.sub(drug_sub_regex,
+                                     "", insurance_clean)
+
+            ratio = Levenshtein.ratio(drug_clean, insurance_clean)
+
+            if insurance_clean in drug_clean:
+                ratio += 0.15
+
+            if ratio > max_ratio:
+                max_ratio = ratio
+                max_insurance = ori_insurance
+
+        if max_ratio > 0.85:
+            drug_dict[drug]["是否医保"] = "是"
+            drug_dict[drug]["医保药品名"] = max_insurance.split("--")[0]
+            drug_dict[drug]["甲乙"] = insurance_dict[max_insurance][1]
+            drug_dict[drug]["医保药品种类"] = insurance_dict[max_insurance][3]
+            drug_dict[drug]["医保药品种类编号"] = insurance_dict[max_insurance][2]
+            drug_dict[drug]["剂型"] = max_insurance.split("--")[1]
+        else:
+            drug_dict[drug]["是否医保"] = "否"
+            drug_dict[drug]["医保药品名"] = ""
+            drug_dict[drug]["甲乙"] = ""
+            drug_dict[drug]["医保药品种类"] = ""
+            drug_dict[drug]["医保药品种类编号"] = ""
+            drug_dict[drug]["剂型"] = ""
+
+    print("drug_dict length: {}".format(len(drug_dict)))
 
     # read disease details
     disease_list = []
@@ -105,84 +248,6 @@ def generate_file():
         disease_dict[disease["name"]] = {}
         for key in disease.keys():
             disease_dict[disease["name"]][key] = disease[key]
-
-    # add insurance info
-    seq_regex = re.compile(r"（[\w]+-[\w]+）")
-    seq_list = []
-    text_list = []
-    code_list = []
-    for index, row in df_insurance_l2.iterrows():
-        try:
-            text = row["text"]
-            code = row["code"]
-            seq = re.findall(seq_regex, text)[0]
-            text = text.replace(seq, "")
-            start, end = seq.replace("（", "").replace("）", "").split("-")
-            seq_list.append([start, end])
-            text_list.append(text)
-            code_list.append(code)
-        except:
-            continue
-
-    zip_list = list(zip(seq_list, code_list, text_list))
-    num_dict = {}
-    for x in zip_list:
-        for i in range(int(x[0][0]), int(x[0][1]) + 1):
-            num_dict[i] = [x[1], x[2]]
-
-    num_regex = re.compile(r"[\w]+")
-    insurance_dict = {}
-    for index, row in df_insurance_l3.iterrows():
-        code = row["编号"]
-        clazz = row["甲乙"]
-        name = row["药品名称"]
-        dosage_form = row["剂型"]
-        try:
-            num = re.findall(num_regex, code)[0]
-            category_num = num_dict[int(num)][0]
-            category = num_dict[int(num)][1]
-        except:
-            category_num = ""
-            category = ""
-        insurance_dict["{}--{}".format(name, dosage_form)] = [code, clazz, category_num, category]
-
-    # 最短编辑比率
-    for drug in drug_dict.keys():
-        max_ratio = 0
-        max_insurance = ""
-        drug_clean = re.sub(r"[\(\)-\/（）\-\[\]\s、]", "", drug)
-        drug_clean = re.sub(r"[片|注射液|颗粒|滴剂|胶囊|散剂|混悬液|乳剂|剂|膏|丸|口服溶液|口服液|咀嚼|泡腾]",
-                            "", drug_clean)
-
-        for ori_insurance in insurance_dict.keys():
-            insurance, dosage_form = ori_insurance.split("--")
-            insurance_clean = re.sub(r"[\(\)-\/（）\-\[\]\s、]", "", insurance)
-            insurance_clean = re.sub(r"[片|注射液|颗粒|滴剂|胶囊|散剂|混悬液|乳剂|剂|膏|丸|口服溶液|口服液|咀嚼|泡腾]",
-                                     "", insurance_clean)
-
-            ratio = Levenshtein.ratio(drug_clean, insurance_clean)
-
-            if insurance_clean in drug_clean:
-                ratio += 0.15
-
-            if ratio > max_ratio:
-                max_ratio = ratio
-                max_insurance = ori_insurance
-
-        if max_ratio > 0.85:
-            drug_dict[drug]["是否医保"] = "是"
-            drug_dict[drug]["医保药品名"] = max_insurance.split("--")[0]
-            drug_dict[drug]["甲乙"] = insurance_dict[max_insurance][1]
-            drug_dict[drug]["医保药品种类"] = insurance_dict[max_insurance][3]
-            drug_dict[drug]["医保药品种类编号"] = insurance_dict[max_insurance][2]
-            drug_dict[drug]["剂型"] = max_insurance.split("--")[1]
-        else:
-            drug_dict[drug]["是否医保"] = "否"
-            drug_dict[drug]["医保药品名"] = ""
-            drug_dict[drug]["甲乙"] = ""
-            drug_dict[drug]["医保药品种类"] = ""
-            drug_dict[drug]["医保药品种类编号"] = ""
-            drug_dict[drug]["剂型"] = ""
 
     with open("processed/disease_drug_list.json", "w", encoding="utf-8") as f:
         json.dump(disease_drug_list, f)
@@ -381,6 +446,6 @@ def handle_fda_warning():
 
 if __name__ == "__main__":
     generate_file()
-    generate_drug_chemical_relation()
-    generate_drug_interaction()
-    handle_fda_warning()
+    # generate_drug_chemical_relation()
+    # generate_drug_interaction()
+    # handle_fda_warning()

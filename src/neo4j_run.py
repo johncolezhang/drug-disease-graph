@@ -5,12 +5,13 @@ from util.neo4j_util import neo4jUtil
 import json
 
 def step4_upload_neo4j():
-    neo4j_host = "neo4j://172.16.227.27:7687"
+    neo4j_host = "neo4j://172.16.231.80:7687"
     neo4j_user = "neo4j"
     neo4j_pwd = "123456"
     neo4j_database = "neo4j"
     neo_util = neo4jUtil(host=neo4j_host, user=neo4j_user, password=neo4j_pwd)
 
+    """
     #####################################################
     print("delete node by label")
     node_list = ["drug", "disease", "symptom"]
@@ -52,13 +53,15 @@ def step4_upload_neo4j():
     #     edge_list = json.load(f)
     # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
     ########################################################
+    """
 
     ########################################################
-    with open("json/all_drug_nodes.json", "r") as f:
-        node_list = json.load(f)
-    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+    # with open("json/all_drug_nodes.json", "r") as f:
+    #     node_list = json.load(f)
+    # neo_util.add_node_to_neo4j(node_list, neo4j_database)
     ########################################################
 
+    """
     ########################################################
     # relation match by Chinese
     with open("json/new_che_drug_edges.json", "r") as f:
@@ -76,7 +79,7 @@ def step4_upload_neo4j():
         edge_list = json.load(f)
     neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
     ########################################################
-
+    """
     ########################################################
     # generate disease degree
     with open("json/disease_degree_nodes.json", "r") as f:
@@ -84,6 +87,13 @@ def step4_upload_neo4j():
     neo_util.add_node_to_neo4j(node_list, neo4j_database)
     #########################################################
 
+
+    #########################################################
+    # # generate new drug disease relation
+    # with open("json/new_drug_disease_edges.json", "r") as f:
+    #     edge_list = json.load(f)
+    # neo_util.add_edge_to_neo4j(edge_list, neo4j_database)
+    ##########################################################
 
 if __name__ == "__main__":
     step4_upload_neo4j()

@@ -31,6 +31,7 @@ def gen_relation():
     disease_set = []
     symptom_set = []
 
+    # drug_disease relation
     with open("processed/disease_drug_list.json", "r", encoding="utf-8") as f:
         disease_drug_list = json.load(f)
 
@@ -329,7 +330,8 @@ def gen_drug_dict_node():
 
     node_list = []
     for key in drug_dict.keys():
-        node_list.append(get_drug_node(key, drug_dict, warning_dict))
+        if key != "":
+            node_list.append(get_drug_node(key, drug_dict, warning_dict))
 
     with open("json/all_drug_nodes.json", "w") as f:
         json.dump(node_list, f)
@@ -434,6 +436,40 @@ def generate_cn_drug_label():
         json.dump(edge_list, f)
 
 
+def gen_new_drug_disease():
+    edge_list = []
+    # drug_disease relation
+    with open("processed/disease_drug_new_list.json", "r", encoding="utf-8") as f:
+        disease_drug_list = json.load(f)
+
+    for drug, disease in disease_drug_list:
+        # add relation edge
+        disease_drug_edge = {
+            "start_node": {
+                "label": ["drug"],
+                "node_ID": "drug_name",
+                "property": {
+                    "drug_name": drug,
+                }
+            },
+            "end_node": {
+                "label": ["disease"],
+                "node_ID": "disease_name",
+                "property": {
+                    "disease_name": disease
+                }
+            },
+            "edge": {
+                "label": "treatment",
+                "property": {}
+            }
+        }
+        edge_list.append(disease_drug_edge)
+
+    with open("json/new_drug_disease_edges.json", "w") as f:
+        json.dump(edge_list, f)
+
+
 if __name__ == "__main__":
     gen_relation()
     gen_drug_che_rel()
@@ -441,3 +477,4 @@ if __name__ == "__main__":
     gen_drug_dict_node()
     gen_new_che_drug_relation()
     generate_cn_drug_label()
+    gen_new_drug_disease()
