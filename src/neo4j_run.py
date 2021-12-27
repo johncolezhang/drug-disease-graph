@@ -56,9 +56,9 @@ def step4_upload_neo4j():
     """
 
     ########################################################
-    # with open("json/all_drug_nodes.json", "r") as f:
-    #     node_list = json.load(f)
-    # neo_util.add_node_to_neo4j(node_list, neo4j_database)
+    with open("json/all_drug_nodes.json", "r") as f:
+        node_list = json.load(f)
+    neo_util.add_node_to_neo4j(node_list, neo4j_database)
     ########################################################
 
     """
@@ -81,10 +81,10 @@ def step4_upload_neo4j():
     ########################################################
     """
     ########################################################
-    # generate disease degree
-    with open("json/disease_degree_nodes.json", "r") as f:
-        node_list = json.load(f)
-    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+    # # generate disease degree
+    # with open("json/disease_degree_nodes.json", "r") as f:
+    #     node_list = json.load(f)
+    # neo_util.add_node_to_neo4j(node_list, neo4j_database)
     #########################################################
 
 

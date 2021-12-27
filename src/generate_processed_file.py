@@ -54,6 +54,23 @@ def generate_file():
 
     print("drug_dict length: {}".format(len(drug_dict)))
 
+    df_drug_description_rare = pd.read_csv("rare/rare_drug_description.csv", dtype=str).fillna("")
+    for index, row in df_drug_description_rare.iterrows():
+        drug_name = row["药品名称"]
+        if drug_name in drug_dict.keys():
+            for col in df_drug_description_rare.columns:
+                if drug_dict[drug_name][col] == "" and row[col] != "":
+                    drug_dict[drug_name][col] = row[col]
+
+        drug_dict[drug_name] = {}
+        for col in dd_columns:
+            if col not in df_drug_description_rare.columns:
+                drug_dict[drug_name][col] = ""
+            else:
+                drug_dict[drug_name][col] = row[col]
+
+    print("drug_dict length: {}".format(len(drug_dict)))
+
     # add insurance info
     seq_regex = re.compile(r"（[\w]+-[\w]+）")
     seq_list = []

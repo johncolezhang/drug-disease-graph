@@ -471,10 +471,10 @@ def gen_new_drug_disease():
 
 
 if __name__ == "__main__":
-    gen_relation()
-    gen_drug_che_rel()
-    # gen_drug_interact_rel()
+    # gen_relation()
+    # gen_drug_che_rel()
+    # # gen_drug_interact_rel()
     gen_drug_dict_node()
-    gen_new_che_drug_relation()
-    generate_cn_drug_label()
-    gen_new_drug_disease()
+    # gen_new_che_drug_relation()
+    # generate_cn_drug_label()
+    # gen_new_drug_disease()
