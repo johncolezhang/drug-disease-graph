@@ -155,7 +155,7 @@ def generate_file():
         if name not in drug_dict.keys():
             drug_dict[name] = {}
 
-    drug_sub_regex = re.compile(r"[片|注射液|颗粒|滴剂|胶囊|散剂|混悬液|乳剂|剂|膏|丸|口服溶液|口服液|咀嚼|泡腾|分散|凝胶|肠溶]")
+    drug_sub_regex = re.compile(r"[片|注射液|颗粒|滴剂|胶囊|散剂|混悬液|乳剂|剂|膏|丸|口服|溶液|口服液|咀嚼|泡腾|分散|凝胶|肠溶|注射用]")
     # 最短编辑比率
     for drug in drug_dict.keys():
         max_ratio = 0
