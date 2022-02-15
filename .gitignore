@@ -142,3 +142,4 @@ dmypy.json
 /ICD11_filter.csv
 /src/cralwer/chromedriver.exe
 /rare/
+/icd11_disease.json
