@@ -143,3 +143,5 @@ dmypy.json
 /src/cralwer/chromedriver.exe
 /rare/
 /icd11_disease.json
+
+/src/cralwer/page/*
