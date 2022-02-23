@@ -44,6 +44,7 @@ class icdMapping:
             list(df_icd10_chapter["章的名称"].values)
         ))
 
+        # cmekg的icd disease mapping
         with open("processed/icd10_disease_dict.json", "r") as f:
             self.disease_dict = json.load(f)
 

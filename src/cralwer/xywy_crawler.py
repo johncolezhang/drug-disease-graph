@@ -8,6 +8,7 @@ sys.path.insert(0, "src")
 import icd_mapping
 import Levenshtein
 import time
+from collections import defaultdict
 
 
 def get_html(url):
@@ -66,6 +67,7 @@ def drug_treat_crawler():
 
 
 def get_disease_icd10():
+    # 寻医问药的药物-疾病,及说明书数据
     with open("processed/all_disease_drug_desc.json", "r") as f:
         disease_dict = json.load(f)
 
@@ -77,6 +79,7 @@ def get_disease_icd10():
         for val in value["drug"]:
             xywy_disease_drug_list.append([key, val])
 
+    # disease-kb里的数据
     with open("processed/disease_drug_list.json", "r") as f:
         disease_drug_list = json.load(f)
 
@@ -84,6 +87,7 @@ def get_disease_icd10():
     df_disease_drug = pd.DataFrame(all_disease_drug_list, columns=["disease", "drug"])
     df_disease_drug = df_disease_drug.drop_duplicates()
 
+    # 所有nmpa药
     all_drug_list = get_all_drug()
 
     df_disease_drug = df_disease_drug[df_disease_drug["drug"].isin(all_drug_list)]
@@ -98,6 +102,7 @@ def get_disease_icd10():
     # 现有疾病与cmekg疾病的精确匹配 4105个
     matched_disease_set = set(all_disease_list) & set(disease_icd_dict.keys())
 
+    # 剩下的模糊匹配
     no_match_1_list = sorted(list(set(disease_icd_dict.keys()) - matched_disease_set))
     no_match_2_list = sorted(list(set(all_disease_list) - matched_disease_set))
 
@@ -138,7 +143,7 @@ def get_disease_icd10():
     for key, value in dis_match_dict.items():
         cur_dis_icd_dict[key] = disease_icd_dict[value]
 
-    # around 4500 disease
+    # around 4500 on-promise disease have icd code
     with open("processed/current_disease_icd_dict.json", "w") as f:
         json.dump(cur_dis_icd_dict, f)
 
@@ -146,6 +151,7 @@ def get_disease_icd10():
     no_match_icd_disease_list = list(set(disease_icd_dict.keys()) -
                                      matched_disease_set.intersection(set(dis_match_dict.values())))
 
+    # 其余没有match到icd code的on-promise disease
     with open("processed/no_match_icd_disease_list.json", "w") as f:
         json.dump(no_match_icd_disease_list, f)
 
@@ -165,34 +171,69 @@ def cmekg_crawler():
     url_template = "https://zstp.pcl.ac.cn:8002/knowledge?name={}&tree_type=疾病"
 
     dis_drug_list = []
+    dis_icd_list = []
     for nmcd in tqdm(no_match_icd_disease_list):
         req = requests.get(url_template.format(nmcd))
         result_dict = json.loads(req.content)
         treat_node_id = list(filter(lambda x: x["value"] == "药物治疗", result_dict["link"]))
-        if len(treat_node_id) == 0:
-            continue
-        treat_node_id = treat_node_id[0]["target"]
-        dis_node_list = list(map(lambda x: x["target"],
-                                 list(filter(lambda x: x["source"] == treat_node_id, result_dict["link"]))))
 
-        disease_list = list(map(
-            lambda x: x["label"],
-            list(filter(lambda x: x["name"] in dis_node_list and "symbol" not in x.keys(), result_dict["node"]))
-        ))
+        if len(treat_node_id) > 0:
+            treat_node_id = treat_node_id[0]["target"]
+            dis_node_list = list(map(lambda x: x["target"],
+                                     list(filter(lambda x: x["source"] == treat_node_id, result_dict["link"]))))
 
-        for dl in disease_list:
-            dis_drug_list.append([nmcd, dl])
+            disease_list = list(map(
+                lambda x: x["label"],
+                list(filter(lambda x: x["name"] in dis_node_list and "symbol" not in x.keys(), result_dict["node"]))
+            ))
+
+            for dl in disease_list:
+                dis_drug_list.append([nmcd, dl])
+
+        icd_node_id = list(filter(lambda x: x["value"] == "ICD-10", result_dict["link"]))
+        if len(icd_node_id) > 0:
+            icd_node_id = icd_node_id[0]["target"]
+            icd_node_list = list(map(lambda x: x["target"],
+                                     list(filter(lambda x: x["source"] == icd_node_id, result_dict["link"]))))
+
+            icd_list = list(map(
+                lambda x: x["label"],
+                list(filter(lambda x: x["name"] in icd_node_list, result_dict["node"]))
+            ))
+
+            for il in icd_list:
+                dis_icd_list.append([nmcd, il])
 
         time.sleep(0.3)
 
     with open("processed/cmekg_disease_drug_list.json", "w") as f:
         json.dump(dis_drug_list, f)
 
+    with open("processed/cmekg_disease_icd_list.json", "w") as f:
+        json.dump(dis_icd_list, f)
+
+
+def cmekg_icd_mapping():
+    with open("processed/cmekg_disease_icd_list.json", "r") as f:
+        dis_icd_list = json.load(f)
+
+    icd_map = icd_mapping.icdMapping()
+    icd10_subclass_dict = icd_map.icd10_subclass_dict
+
+    dis_icd_dict = defaultdict(dict)
+    for dis, icd in dis_icd_list:
+        dis_icd_dict[dis][icd] = icd10_subclass_dict.get(icd, "")
+
+    with open("processed/cmekg_disease_icd_dict.json", "w") as f:
+        json.dump(dis_icd_dict, f)
+
 
 if __name__ == "__main__":
     # drug_treat_crawler()
-    get_disease_icd10()
+    # get_disease_icd10()
     # cmekg_crawler()
+    cmekg_icd_mapping()
+
 
     """
     药物icd及药物-疾病关系对补充

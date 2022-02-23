@@ -61,6 +61,12 @@ def step4_upload_neo4j():
     neo_util.add_node_to_neo4j(node_list, neo4j_database)
     ########################################################
 
+    ########################################################
+    with open("json/all_disease_nodes.json", "r") as f:
+        node_list = json.load(f)
+    neo_util.add_node_to_neo4j(node_list, neo4j_database)
+    ########################################################
+
     """
     ########################################################
     # relation match by Chinese

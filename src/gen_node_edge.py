@@ -337,6 +337,33 @@ def gen_drug_dict_node():
         json.dump(node_list, f)
 
 
+def gen_disease_node():
+    with open("processed/disease_dict.json", "r", encoding="utf-8") as f:
+        disease_dict = json.load(f)
+
+    disease_node_list = []
+    for disease in disease_dict.keys():
+        disease_node = {
+            "label": ["disease"],
+            "node_ID": "disease_name",
+            "property": {
+                "disease_name": disease,
+                "display": disease,
+                "description": disease_dict.get(disease, {}).get("desc", ""),
+                "prevent": disease_dict.get(disease, {}).get("prevent", ""),
+                "cause": disease_dict.get(disease, {}).get("cause", ""),
+                "in_medical_insurance": disease_dict.get(disease, {}).get("yibao_status", ""),
+                "susceptible_people": disease_dict.get(disease, {}).get("easy_get", ""),
+                "infectious_through": disease_dict.get(disease, {}).get("get_way", ""),
+                "ICD10": disease_dict.get(disease, {}).get("ICD10_code", "")
+            }
+        }
+        disease_node_list.append(disease_node)
+
+    with open("json/all_disease_nodes.json", "w") as f:
+        json.dump(disease_node_list, f)
+
+
 def gen_new_che_drug_relation():
     # 通过化合物中文翻译匹配新的药物化合物关系
     df_new_che_drug = pd.read_csv("processed/new_match_drug_chemical.csv", dtype=str).fillna("")
@@ -474,6 +501,7 @@ if __name__ == "__main__":
     # gen_relation()
     # gen_drug_che_rel()
     # # gen_drug_interact_rel()
+    gen_disease_node()
     gen_drug_dict_node()
     # gen_new_che_drug_relation()
     # generate_cn_drug_label()

@@ -4,8 +4,10 @@ import os
 from fnmatch import fnmatch
 import Levenshtein
 import re
+import icd_mapping
 
-def generate_file():
+
+def generate_description():
     # read drug description
     dd_columns = ["药品名称", "成份", "性状", "适应症", "用法用量", "不良反应", "禁忌", "注意事项",
                   "孕妇及哺乳期妇女用药", "儿童用药", "老年用药", "贮藏", "规格", "药物相互作用",
@@ -24,6 +26,12 @@ def generate_file():
 
     df_drug_description.to_csv("processed/drug_description.csv", index=False)
 
+
+def generate_file():
+    # 药源网说明书
+    df_drug_description = pd.read_csv("processed/drug_description.csv", dtype=str).fillna("")
+    dd_columns = list(df_drug_description.columns)
+
     df_insurance_l2 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L2.csv", dtype=str).fillna("")
     df_insurance_l3 = pd.read_csv("d:/pgkb_graph/processed/drug_insurance_L3.csv", dtype=str).fillna("")
 
@@ -37,6 +45,7 @@ def generate_file():
 
     print("drug_dict length: {}".format(len(drug_dict)))
 
+    # sql解析出的说明书
     df_drug_description_new = pd.read_csv("processed/new_drug_description.csv", dtype=str).fillna("")
     for index, row in df_drug_description_new.iterrows():
         drug_name = row["药品名称"]
@@ -54,6 +63,7 @@ def generate_file():
 
     print("drug_dict length: {}".format(len(drug_dict)))
 
+    # 手动维护的罕见病药说明书
     df_drug_description_rare = pd.read_csv("rare/rare_drug_description.csv", dtype=str).fillna("")
     for index, row in df_drug_description_rare.iterrows():
         drug_name = row["药品名称"]
@@ -65,6 +75,27 @@ def generate_file():
         drug_dict[drug_name] = {}
         for col in dd_columns:
             if col not in df_drug_description_rare.columns:
+                drug_dict[drug_name][col] = ""
+            else:
+                drug_dict[drug_name][col] = row[col]
+
+    print("drug_dict length: {}".format(len(drug_dict)))
+
+    # 药智网说明书
+    df_drug_description_yaozhi = pd.read_csv("d:/ticket/processed/drug_description.csv",
+                                             dtype=str).fillna("")
+
+    for index, row in df_drug_description_yaozhi.iterrows():
+        drug_name = row["药品名称"]
+        if drug_name in drug_dict.keys():
+            for col in df_drug_description_yaozhi.columns:
+                if col in drug_dict[drug_name].keys() and \
+                        drug_dict[drug_name][col] == "" and row[col] != "":
+                    drug_dict[drug_name][col] = row[col]
+
+        drug_dict[drug_name] = {}
+        for col in dd_columns:
+            if col not in df_drug_description_yaozhi.columns:
                 drug_dict[drug_name][col] = ""
             else:
                 drug_dict[drug_name][col] = row[col]
@@ -196,6 +227,7 @@ def generate_file():
 
     print("drug_dict length: {}".format(len(drug_dict)))
 
+
     # read disease details
     disease_list = []
     with open("data/medical.json", "r", encoding="utf-8") as f:
@@ -211,10 +243,31 @@ def generate_file():
     icd_name_dict = dict(zip(list(df_icd["disease"].values),
                              list(df_icd["code"].values)))
 
+    with open("processed/current_disease_icd_dict.json", "r") as f:
+        cur_dis_icd_dict = json.load(f)
+
+    with open("processed/cmekg_disease_icd_dict.json", "r") as f:
+        dis_icd_dict = json.load(f)
+
+    icd_map = icd_mapping.icdMapping()
+    icd10_subclass_dict = icd_map.icd10_subclass_dict
+
     no_match_list = []
     for disease in disease_list:
-        if disease["name"] in icd_name_dict.keys():
-            disease["ICD10_code"] = icd_name_dict[disease["name"]]
+        if disease["name"] in cur_dis_icd_dict.keys():
+            disease["ICD10_code"] = str(cur_dis_icd_dict[disease["name"]])
+
+        elif disease["name"] in dis_icd_dict.keys():
+            disease["ICD10_code"] = str(dis_icd_dict[disease["name"]])
+
+        elif disease["name"] in icd_name_dict.keys():
+            icd_code = icd_name_dict[disease["name"]]
+            if icd_code in icd_map.icd10_code_dict.keys():
+                icd_dict_str = str({icd_code: icd_map.icd10_code_dict[icd_code]})
+            else:
+                icd_dict_str = str({icd_code: icd10_subclass_dict.get(icd_code[:5], "")})
+            disease["ICD10_code"] = icd_dict_str
+
         else:
             no_match_list.append(disease["name"])
             disease["ICD10_code"] = ""
@@ -237,7 +290,7 @@ def generate_file():
         max_ratio = 0
         max_disease = ""
         for disease, disease_clean in icd_name_list:
-            ratio = Levenshtein.ratio(no_match_clean, disease_clean)
+            ratio = Levenshtein.ratio(no_match_clean.lower(), disease_clean.lower())
             if ratio > max_ratio:
                 max_ratio = ratio
                 max_disease = disease
@@ -462,6 +515,7 @@ def handle_fda_warning():
 
 
 if __name__ == "__main__":
+    # generate_description()
     generate_file()
     # generate_drug_chemical_relation()
     # generate_drug_interaction()
